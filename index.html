@@ -29,23 +29,48 @@
             position: absolute;
             cursor: pointer;
         }
-        #score {
+        #score, #timer {
             font-size: 24px;
             margin-top: 20px;
+        }
+        #game-over {
+            font-size: 32px;
+            margin-top: 30px;
+            display: none;
+        }
+        #restart-btn {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            display: none;
         }
     </style>
 </head>
 <body>
     <h1>Поймай хомяка! 🐹</h1>
     <div id="score">Счёт: 0</div>
+    <div id="timer">Время: 30</div>
     <div id="game-area"></div>
+    <div id="game-over">Игра окончена!</div>
+    <button id="restart-btn">Играть снова</button>
 
     <script>
         let score = 0;
+        let timeLeft = 30; // секунд
+        let spawnInterval = 1500;
+        let gameInterval;
+        let timerInterval;
+
         const gameArea = document.getElementById('game-area');
         const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const gameOverDisplay = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
 
         function spawnHamster() {
+            if (timeLeft <= 0) return;
+
             const hamster = document.createElement('div');
             hamster.classList.add('hamster');
             hamster.style.top = Math.random() * (gameArea.clientHeight - 80) + 'px';
@@ -55,6 +80,13 @@
                 score++;
                 scoreDisplay.textContent = 'Счёт: ' + score;
                 gameArea.removeChild(hamster);
+
+                // Ускоряем игру каждые 5 очков
+                if (score % 5 === 0 && spawnInterval > 500) {
+                    clearInterval(gameInterval);
+                    spawnInterval -= 200;
+                    gameInterval = setInterval(spawnHamster, spawnInterval);
+                }
             };
 
             gameArea.appendChild(hamster);
@@ -66,7 +98,41 @@
             }, 1200);
         }
 
-        setInterval(spawnHamster, 1500);
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            spawnInterval = 1500;
+            scoreDisplay.textContent = 'Счёт: 0';
+            timerDisplay.textContent = 'Время: 30';
+            gameOverDisplay.style.display = 'none';
+            restartBtn.style.display = 'none';
+            gameArea.innerHTML = '';
+
+            gameInterval = setInterval(spawnHamster, spawnInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = 'Время: ' + timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            gameArea.innerHTML = '';
+            gameOverDisplay.style.display = 'block';
+            gameOverDisplay.textContent = 'Игра окончена! Твой счёт: ' + score;
+            restartBtn.style.display = 'inline-block';
+        }
+
+        restartBtn.onclick = () => {
+            startGame();
+        };
+
+        // Запускаем игру при загрузке страницы
+        startGame();
     </script>
 </body>
 </html>
