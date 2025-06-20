@@ -1,117 +1,107 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <title>Поймай хомяка! 🐹</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Викторина: Программирование</title>
     <style>
         body {
+            background-color: #111;
+            color: #00e0ff;
             font-family: sans-serif;
-            background: #fffbe6;
             text-align: center;
             margin: 0;
+            padding: 20px;
         }
-        h1 {
-            margin-top: 10px;
+        .question {
+            font-size: 1.5rem;
+            margin: 30px 0;
         }
-        #currency {
-            font-size: 20px;
-            margin: 10px;
-        }
-        #game-area {
-            width: 100vw;
-            height: 60vh;
-            position: relative;
-            background: #d2f8d2;
-            overflow: hidden;
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
             margin: 0 auto;
         }
-        .hamster {
-            width: 80px;
-            height: 80px;
-            background-size: cover;
-            position: absolute;
+        .answer-btn {
+            background: #222;
+            color: #00e0ff;
+            border: 2px solid #00e0ff;
+            padding: 12px;
+            font-size: 1rem;
             cursor: pointer;
+            transition: 0.2s;
         }
-        #shop {
+        .answer-btn:hover {
+            background: #00e0ff;
+            color: #111;
+        }
+        .score {
+            font-size: 1.2rem;
             margin-top: 20px;
-        }
-        .skin {
-            display: inline-block;
-            margin: 10px;
-            padding: 10px;
-            border: 2px solid #ccc;
-            cursor: pointer;
-        }
-        .skin.selected {
-            border-color: gold;
         }
     </style>
 </head>
 <body>
-    <h1>Поймай хомяка! 🐹</h1>
-    <div id="currency">Монетки: 0</div>
-    <div id="game-area"></div>
-
-    <h2>Магазин скинов</h2>
-    <div id="shop">
-        <div class="skin" data-skin="https://cdn-icons-png.flaticon.com/512/616/616408.png">🐹 Классика (0)</div>
-        <div class="skin" data-skin="https://cdn-icons-png.flaticon.com/512/1179/1179069.png">💎 Золотой (10)</div>
-    </div>
+    <h1>Викторина по программированию</h1>
+    <div class="question" id="question">Загрузка вопроса...</div>
+    <div class="answers" id="answers"></div>
+    <div class="score" id="score">Счёт: 0</div>
 
     <script>
-        let currency = 0;
-        let skinUrl = localStorage.getItem('selectedSkin') || 'https://cdn-icons-png.flaticon.com/512/616/616408.png';
+        const questions = [
+            {
+                question: "Что выведет print(2 ** 3)?",
+                answers: ["5", "6", "8", "9"],
+                correct: "8"
+            },
+            {
+                question: "Какой тип данных в Python неизменяемый?",
+                answers: ["list", "dict", "tuple", "set"],
+                correct: "tuple"
+            },
+            {
+                question: "Какой оператор используется для сравнения?",
+                answers: ["=", "==", "!=", "=>"],
+                correct: "=="
+            },
+            {
+                question: "Что делает функция len()?",
+                answers: ["Удаляет элемент", "Возвращает длину", "Добавляет элемент", "Сортирует"],
+                correct: "Возвращает длину"
+            }
+        ];
 
-        const gameArea = document.getElementById('game-area');
-        const currencyDisplay = document.getElementById('currency');
-        const skins = document.querySelectorAll('.skin');
+        let score = 0;
 
-        skins.forEach((el, i) => {
-            el.onclick = () => {
-                if (i === 1 && currency < 10) {
-                    alert('Нужно 10 монет для покупки!');
-                    return;
-                }
-
-                if (i === 1 && !localStorage.getItem('goldSkinUnlocked')) {
-                    currency -= 10;
-                    localStorage.setItem('goldSkinUnlocked', 'true');
-                    currencyDisplay.textContent = 'Монетки: ' + currency;
-                }
-
-                if (i === 1 && !localStorage.getItem('goldSkinUnlocked')) return;
-
-                skinUrl = el.dataset.skin;
-                localStorage.setItem('selectedSkin', skinUrl);
-                skins.forEach(s => s.classList.remove('selected'));
-                el.classList.add('selected');
-            };
-
-            if (el.dataset.skin === skinUrl) el.classList.add('selected');
-        });
-
-        function spawnHamster() {
-            const hamster = document.createElement('div');
-            hamster.classList.add('hamster');
-            hamster.style.backgroundImage = `url(${skinUrl})`;
-            hamster.style.top = Math.random() * (gameArea.clientHeight - 80) + 'px';
-            hamster.style.left = Math.random() * (gameArea.clientWidth - 80) + 'px';
-
-            hamster.onclick = () => {
-                currency++;
-                currencyDisplay.textContent = 'Монетки: ' + currency;
-                gameArea.removeChild(hamster);
-            };
-
-            gameArea.appendChild(hamster);
-            setTimeout(() => {
-                if (gameArea.contains(hamster)) {
-                    gameArea.removeChild(hamster);
-                }
-            }, 1200);
+        function loadQuestion() {
+            const q = questions[Math.floor(Math.random() * questions.length)];
+            const shuffled = [...q.answers].sort(() => Math.random() - 0.5);
+            document.getElementById("question").innerText = q.question;
+            const answersDiv = document.getElementById("answers");
+            answersDiv.innerHTML = '';
+            shuffled.forEach(answer => {
+                const btn = document.createElement("button");
+                btn.className = "answer-btn";
+                btn.innerText = answer;
+                btn.onclick = () => {
+                    if (answer === q.correct) {
+                        score++;
+                        alert("✅ Правильно!");
+                    } else {
+                        alert("❌ Неверно. Правильный ответ: " + q.correct);
+                    }
+                    document.getElementById("score").innerText = "Счёт: " + score;
+                    loadQuestion();
+                };
+                answersDiv.appendChild(btn);
+            });
         }
 
-        setInterval(spawnHamster, 1500);
+        loadQuestion();
     </script>
 </body>
 </html>
+
