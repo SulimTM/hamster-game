@@ -2,20 +2,24 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <title>Поймай хомяка!</title>
+    <title>Поймай хомяка! 🐹</title>
     <style>
         body {
-            margin: 0;
             font-family: sans-serif;
-            background-color: #fffcf2;
+            background: #fffbe6;
             text-align: center;
+            margin: 0;
         }
         h1 {
-            color: #333;
+            margin-top: 10px;
+        }
+        #currency {
+            font-size: 20px;
+            margin: 10px;
         }
         #game-area {
             width: 100vw;
-            height: 70vh;
+            height: 60vh;
             position: relative;
             background: #d2f8d2;
             overflow: hidden;
@@ -24,73 +28,82 @@
         .hamster {
             width: 80px;
             height: 80px;
-            background-image: url('https://cdn-icons-png.flaticon.com/512/616/616408.png');
             background-size: cover;
             position: absolute;
             cursor: pointer;
         }
-        #score, #timer {
-            font-size: 24px;
+        #shop {
             margin-top: 20px;
         }
-        #game-over {
-            font-size: 32px;
-            margin-top: 30px;
-            display: none;
-        }
-        #restart-btn {
-            font-size: 18px;
-            padding: 10px 20px;
-            margin-top: 20px;
+        .skin {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            border: 2px solid #ccc;
             cursor: pointer;
-            display: none;
+        }
+        .skin.selected {
+            border-color: gold;
         }
     </style>
 </head>
 <body>
     <h1>Поймай хомяка! 🐹</h1>
-    <div id="score">Счёт: 0</div>
-    <div id="timer">Время: 30</div>
+    <div id="currency">Монетки: 0</div>
     <div id="game-area"></div>
-    <div id="game-over">Игра окончена!</div>
-    <button id="restart-btn">Играть снова</button>
+
+    <h2>Магазин скинов</h2>
+    <div id="shop">
+        <div class="skin" data-skin="https://cdn-icons-png.flaticon.com/512/616/616408.png">🐹 Классика (0)</div>
+        <div class="skin" data-skin="https://cdn-icons-png.flaticon.com/512/1179/1179069.png">💎 Золотой (10)</div>
+    </div>
 
     <script>
-        let score = 0;
-        let timeLeft = 30; // секунд
-        let spawnInterval = 1500;
-        let gameInterval;
-        let timerInterval;
+        let currency = 0;
+        let skinUrl = localStorage.getItem('selectedSkin') || 'https://cdn-icons-png.flaticon.com/512/616/616408.png';
 
         const gameArea = document.getElementById('game-area');
-        const scoreDisplay = document.getElementById('score');
-        const timerDisplay = document.getElementById('timer');
-        const gameOverDisplay = document.getElementById('game-over');
-        const restartBtn = document.getElementById('restart-btn');
+        const currencyDisplay = document.getElementById('currency');
+        const skins = document.querySelectorAll('.skin');
+
+        skins.forEach((el, i) => {
+            el.onclick = () => {
+                if (i === 1 && currency < 10) {
+                    alert('Нужно 10 монет для покупки!');
+                    return;
+                }
+
+                if (i === 1 && !localStorage.getItem('goldSkinUnlocked')) {
+                    currency -= 10;
+                    localStorage.setItem('goldSkinUnlocked', 'true');
+                    currencyDisplay.textContent = 'Монетки: ' + currency;
+                }
+
+                if (i === 1 && !localStorage.getItem('goldSkinUnlocked')) return;
+
+                skinUrl = el.dataset.skin;
+                localStorage.setItem('selectedSkin', skinUrl);
+                skins.forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+            };
+
+            if (el.dataset.skin === skinUrl) el.classList.add('selected');
+        });
 
         function spawnHamster() {
-            if (timeLeft <= 0) return;
-
             const hamster = document.createElement('div');
             hamster.classList.add('hamster');
+            hamster.style.backgroundImage = `url(${skinUrl})`;
             hamster.style.top = Math.random() * (gameArea.clientHeight - 80) + 'px';
             hamster.style.left = Math.random() * (gameArea.clientWidth - 80) + 'px';
 
             hamster.onclick = () => {
-                score++;
-                scoreDisplay.textContent = 'Счёт: ' + score;
+                currency++;
+                currencyDisplay.textContent = 'Монетки: ' + currency;
                 gameArea.removeChild(hamster);
-
-                // Ускоряем игру каждые 5 очков
-                if (score % 5 === 0 && spawnInterval > 500) {
-                    clearInterval(gameInterval);
-                    spawnInterval -= 200;
-                    gameInterval = setInterval(spawnHamster, spawnInterval);
-                }
             };
 
             gameArea.appendChild(hamster);
-
             setTimeout(() => {
                 if (gameArea.contains(hamster)) {
                     gameArea.removeChild(hamster);
@@ -98,41 +111,7 @@
             }, 1200);
         }
 
-        function startGame() {
-            score = 0;
-            timeLeft = 30;
-            spawnInterval = 1500;
-            scoreDisplay.textContent = 'Счёт: 0';
-            timerDisplay.textContent = 'Время: 30';
-            gameOverDisplay.style.display = 'none';
-            restartBtn.style.display = 'none';
-            gameArea.innerHTML = '';
-
-            gameInterval = setInterval(spawnHamster, spawnInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerDisplay.textContent = 'Время: ' + timeLeft;
-                if (timeLeft <= 0) {
-                    endGame();
-                }
-            }, 1000);
-        }
-
-        function endGame() {
-            clearInterval(gameInterval);
-            clearInterval(timerInterval);
-            gameArea.innerHTML = '';
-            gameOverDisplay.style.display = 'block';
-            gameOverDisplay.textContent = 'Игра окончена! Твой счёт: ' + score;
-            restartBtn.style.display = 'inline-block';
-        }
-
-        restartBtn.onclick = () => {
-            startGame();
-        };
-
-        // Запускаем игру при загрузке страницы
-        startGame();
+        setInterval(spawnHamster, 1500);
     </script>
 </body>
 </html>
